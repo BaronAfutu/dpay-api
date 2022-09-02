@@ -14,14 +14,17 @@ const options = {
 	definition: {
 		openapi: "3.0.0",
 		info: {
-			title: "Library API",
+			title: "DPAY API",
 			version: "1.0.0",
-			description: "A simple Express Library API",
+			description: "Simultaneous payment api",
 		},
 		servers: [
 			{
 				url: "http://localhost:3000",
 			},
+			{
+				url: "https://dpay-api.herokuapp.com/",
+			}
 		],
 	},
 	apis: ["./routes/*.js"],
