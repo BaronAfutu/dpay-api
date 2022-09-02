@@ -1,0 +1,24 @@
+{
+  "name": "dpay-api",
+  "version": "1.0.0",
+  "description": "API for ease of multiple payment",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Baron Afutu",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "helmet": "^5.1.1",
+    "joi": "^17.6.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.5.4",
+    "morgan": "^1.10.0",
+    "swagger-jsdoc": "^6.2.5",
+    "swagger-ui-express": "^4.5.0",
+    "uuid": "^8.3.2"
+  }
+}
