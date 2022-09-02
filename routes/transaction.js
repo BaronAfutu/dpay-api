@@ -131,6 +131,63 @@ require('dotenv').config({ path: './.env' });
     }
  })
 
+
+ router.post("/bubble/transaction/",async(req,res)=>{
+    try {
+        // await detailsSchema.validateAsync(req.body);
+        const {amount_payable, amount,order_id,
+                restaurantName, restaurantAccNum, restaurantPercentage,
+                driverName, driverAccNum, driverPercentage,
+                companyName, companyAccNum, companyPercentage,} = req.body;
+        try {
+            let {key} = jwt.verify(req.headers.authorization,process.env.JWT_SECRET);
+            if(key!=process.env.DPAY_SECRET) return res.status(403).send({status:'Unathorized'});
+        } catch (error) {
+            return res.status(401).send({status:'Unathorized'});
+        }
+        
+
+        const newTransaction = new Transaction(
+        {
+            'transaction_id':uuidv4(),
+            'order_id':uuidv4(),
+            'payment':{
+                'restaurant':{
+                    'name': restaurantName,
+                    'amount': parseFloat((amount*restaurantPercentage).toFixed(2)),
+                    'transaction_id':uuidv4(),
+                },
+                'driver':{
+                    'name': driverName,
+                    'amount': parseFloat((amount*driverPercentage).toFixed(2)),
+                    'transaction_id':uuidv4(),
+                },
+                'company':{
+                    'name': companyName,
+                    'amount': parseFloat((amount*companyPercentage).toFixed(2)),
+                    'transaction_id':uuidv4(),
+                },
+            }
+        });
+        newTransaction.save();
+        return res.send({
+            transaction_id:newTransaction.transaction_id,
+            order_id: newTransaction.order_id,
+            restaurantName:newTransaction.payment.restaurant.name,
+            restaurantAmount:newTransaction.payment.restaurant.amount,
+            restaurantTid:newTransaction.payment.restaurant.transaction_id,
+            driverName:newTransaction.payment.driver.name,
+            driverAmount:newTransaction.payment.driver.amount,
+            driverTid:newTransaction.payment.driver.transaction_id,
+            companyName:newTransaction.payment.company.name,
+            companyAmount:newTransaction.payment.company.amount,
+            companyTid:newTransaction.payment.company.transaction_id,
+        });
+    } catch (error) {
+        throw error;//return res.status(500).send(error);
+    }
+ })
+
  router.post('/token/',(req,res)=>{
      if(req.body.key==process.env.DPAY_SECRET){
          res.json({
