@@ -6,24 +6,9 @@ var TransactionSchema = mongoose.Schema({
     order_id:String,
     amount: Number,
     payment:{
-        restaurant:{
-            name:String,
-            amount: Number,
-            acc_number: String,
-            transaction_id: String
-        },
-        driver:{
-            name:String,
-            amount: Number,
-            acc_number: String,
-            transaction_id: String
-        },
-        company:{
-            name:String,
-            amount: Number,
-            acc_number: String,
-            transaction_id: String
-        },
+        restaurant:Object,
+        driver:Object,
+        company:Object,
     },
     created_at:{type: Date, default:Date.now()},
     updated_at:{type: Date, default:Date.now()}

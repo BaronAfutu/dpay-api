@@ -1,10 +1,13 @@
 const express = require("express");
+const axios = require('axios').default;
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const Transaction = require('../models/transaction');
 const detailsSchema = require('../validation');
 const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: './.env' });
+const makePayment = require('../MTN/makePayment');
+const makeTransfers = require('../MTN/makeDisbursement');
 
 /**
  * @swagger
@@ -135,7 +138,7 @@ require('dotenv').config({ path: './.env' });
  router.post("/bubble/transaction/",async(req,res)=>{
     try {
         // await detailsSchema.validateAsync(req.body);
-        const {amount_payable, amount,order_id,
+        const {amount_payable, amount,
                 restaurantName, restaurantAccNum, restaurantPercentage,
                 driverName, driverAccNum, driverPercentage,
                 companyName, companyAccNum, companyPercentage,} = req.body;
@@ -145,46 +148,45 @@ require('dotenv').config({ path: './.env' });
         } catch (error) {
             return res.status(401).send({status:'Unathorized'});
         }
-        
+
+        const paymentDetails = await makePayment("0248974853",amount_payable.toString());
+        const transferDetails = await makeTransfers(
+            [restaurantAccNum,driverAccNum,companyAccNum],
+            [(amount*restaurantPercentage).toFixed(2),(amount*driverPercentage).toFixed(2),(amount*companyPercentage).toFixed(2)],
+            [restaurantName,driverName,companyName]
+        );
 
         const newTransaction = new Transaction(
         {
-            'transaction_id':uuidv4(),
-            'order_id':uuidv4(),
+            'transaction_id':paymentDetails.financialTransactionId,
+            'amount': amount,
+            'order_id':Date.now(),
             'payment':{
-                'restaurant':{
-                    'name': restaurantName,
-                    'amount': parseFloat((amount*restaurantPercentage).toFixed(2)),
-                    'transaction_id':uuidv4(),
-                },
-                'driver':{
-                    'name': driverName,
-                    'amount': parseFloat((amount*driverPercentage).toFixed(2)),
-                    'transaction_id':uuidv4(),
-                },
-                'company':{
-                    'name': companyName,
-                    'amount': parseFloat((amount*companyPercentage).toFixed(2)),
-                    'transaction_id':uuidv4(),
-                },
+                'restaurant':transferDetails[0],
+                'driver':transferDetails[1],
+                'company':transferDetails[2],
             }
         });
         newTransaction.save();
         return res.send({
             transaction_id:newTransaction.transaction_id,
             order_id: newTransaction.order_id,
-            restaurantName:newTransaction.payment.restaurant.name,
+            restaurantName:restaurantName,
             restaurantAmount:newTransaction.payment.restaurant.amount,
-            restaurantTid:newTransaction.payment.restaurant.transaction_id,
-            driverName:newTransaction.payment.driver.name,
+            restaurantTid:newTransaction.payment.restaurant.financialTransactionId,
+            restaurantMessage:newTransaction.payment.restaurant.payerMessage,
+            driverName:driverName,
             driverAmount:newTransaction.payment.driver.amount,
-            driverTid:newTransaction.payment.driver.transaction_id,
-            companyName:newTransaction.payment.company.name,
+            driverTid:newTransaction.payment.driver.financialTransactionId,
+            driverMessage:newTransaction.payment.driver.payerMessage,
+            companyName:companyName,
             companyAmount:newTransaction.payment.company.amount,
-            companyTid:newTransaction.payment.company.transaction_id,
+            companyTid:newTransaction.payment.company.financialTransactionId,
+            companyMessage:newTransaction.payment.company.payerMessage,
         });
     } catch (error) {
-        throw error;//return res.status(500).send(error);
+        // throw error;
+        return res.status(500).send(error);
     }
  })
 
